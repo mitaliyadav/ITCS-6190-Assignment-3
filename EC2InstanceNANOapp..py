@@ -18,46 +18,46 @@ queries_to_run = [
     {
         "title": "1. Total Sales by Customer",
         "query": """
-            SELECT Customer, SUM(Amount) AS TotalAmountSpent
-            FROM "filtered_orders"
-            GROUP BY Customer
+            SELECT "customer", SUM("amount") AS TotalAmountSpent
+            FROM "orders_db"."processed"
+            GROUP BY "customer"
             ORDER BY TotalAmountSpent DESC;
         """
     },
     {
         "title": "2. Monthly Order Volume and Revenue",
         "query": """
-            SELECT DATE_TRUNC('month', CAST(OrderDate AS DATE)) AS OrderMonth,
-            COUNT(OrderID) AS NumberOfOrders,
-            ROUND(SUM(Amount), 2) AS MonthlyRevenue
-            FROM "filtered_orders"
+            SELECT DATE_TRUNC('month', CAST("order_date" AS DATE)) AS OrderMonth,
+            COUNT("orderid") AS NumberOfOrders,
+            ROUND(SUM("amount"), 2) AS MonthlyRevenue
+            FROM "orders_db"."processed"
             GROUP BY 1 ORDER BY OrderMonth;
         """
     },
     {
         "title": "3. Order Status Dashboard",
         "query": """
-            SELECT Status, COUNT(OrderID) AS OrderCount, ROUND(SUM(Amount), 2) AS TotalAmount
-            FROM "filtered_orders"
-            GROUP BY Status;
+            SELECT "status", COUNT("orderid") AS OrderCount, ROUND(SUM("amount"), 2) AS TotalAmount
+            FROM "orders_db"."processed"
+            GROUP BY "status";
         """
     },
     {
         "title": "4. Average Order Value (AOV) per Customer",
         "query": """
-            SELECT Customer, ROUND(AVG(Amount), 2) AS AverageOrderValue
-            FROM "filtered_orders"
-            GROUP BY Customer
+            SELECT "customer", ROUND(AVG("amount"), 2) AS AverageOrderValue
+            FROM "orders_db"."processed"
+            GROUP BY "customer"
             ORDER BY AverageOrderValue DESC;
         """
     },
     {
         "title": "5. Top 10 Largest Orders in February 2025",
         "query": """
-            SELECT OrderDate, OrderID, Customer, Amount
-            FROM "filtered_orders"
-            WHERE CAST(OrderDate AS DATE) BETWEEN DATE '2025-02-01' AND DATE '2025-02-28'
-            ORDER BY Amount DESC LIMIT 10;
+            SELECT "orderdate", "orderid", "customer", "amount"
+            FROM "orders_db"."processed"
+            WHERE CAST("orderdate" AS DATE) BETWEEN DATE '2025-02-01' AND DATE '2025-02-28'
+            ORDER BY "amount" DESC LIMIT 10;
         """
     }
 ]
