@@ -10,6 +10,8 @@ First, set up an S3 bucket with the following folder structure to manage the dat
     * **`raw/`**: For incoming raw data files.
     * **`processed/`**: For cleaned and filtered data output by the Lambda function.
     * **`enriched/`**: For storing athena query results.
+<img width="3674" height="1575" alt="image" src="https://github.com/user-attachments/assets/f228006c-0885-4e9d-9214-a1e72e808b3e" />
+
 
 ---
 
@@ -26,6 +28,8 @@ Create the following IAM roles to grant AWS services the necessary permissions t
     * `AWSLambdaBasicExecutionRole`
     * `AmazonS3FullAccess`
 5.  Give the role a descriptive name (e.g., `Lambda-S3-Processing-Role`) and create it.
+<img width="3657" height="1572" alt="image" src="https://github.com/user-attachments/assets/9396e601-103b-4334-9e5a-9a409b1c6d92" />
+
 
 ### Glue Service Role
 
@@ -36,6 +40,8 @@ Create the following IAM roles to grant AWS services the necessary permissions t
     * `AWSGlueServiceRole`
 3.  Name the role (e.g., `Glue-S3-Crawler-Role`) and create it.
 
+<img width="3667" height="1602" alt="image" src="https://github.com/user-attachments/assets/eb1ecf52-6f16-40db-bb9b-ea3838e5acb8" />
+
 ### EC2 Instance Profile
 
 1.  Create a final IAM role for **AWS service** with the use case **EC2**.
@@ -43,6 +49,8 @@ Create the following IAM roles to grant AWS services the necessary permissions t
     * `AmazonS3FullAccess`
     * `AmazonAthenaFullAccess`
 3.  Name the role (e.g., `EC2-Athena-Dashboard-Role`) and create it.
+
+<img width="3672" height="1606" alt="image" src="https://github.com/user-attachments/assets/c9ead66f-98e7-4e23-8c9f-a371a8924ec4" />
 
 ---
 
@@ -59,6 +67,10 @@ This function will automatically process files uploaded to the `raw/` S3 folder.
 7.  Click **Create function**.
 8.  In the **Code source** editor, replace the default code with LambdaFunction.py code for processing the raw data.
 
+<img width="3687" height="1577" alt="image" src="https://github.com/user-attachments/assets/5e219308-bd34-4d73-8120-65b656c19f40" />
+
+<img width="3695" height="1550" alt="image" src="https://github.com/user-attachments/assets/63069b30-24b7-4cc3-b494-4909e8759a93" />
+
 ---
 
 ## 4. Configure the S3 Trigger ⚡
@@ -73,8 +85,13 @@ Set up the S3 trigger to invoke your Lambda function automatically.
 6.  **Suffix (Recommended)**: Enter `.csv`.
 7.  Check the acknowledgment box and click **Add**.
 
+<img width="3693" height="1556" alt="image" src="https://github.com/user-attachments/assets/d242c31a-586a-436f-b91c-67025fa10896" />
+
 --- 
 **Start Processing of Raw Data**: Now upload the Orders.csv file into the `raw/` folder of the S3 Bucket. This will automatically trigger the Lambda function.
+
+<img width="3653" height="1570" alt="image" src="https://github.com/user-attachments/assets/9e985ad7-67f8-42dd-909d-df506f2f6295" />
+
 ---
 
 ## 5. Create a Glue Crawler 🕸️
@@ -89,6 +106,8 @@ The crawler will scan your processed data and create a data catalog, making it q
 6.  **Output**: Click **Add database** and create a new database named `orders_db`.
 7.  Finish the setup and run the crawler. It will create a new table in your `orders_db` database.
 
+<img width="3677" height="1586" alt="image" src="https://github.com/user-attachments/assets/53e6245b-802e-44ca-bc62-cfd75a0ffa59" />
+
 ---
 
 ## 6. Query Data with Amazon Athena 🔍
@@ -97,10 +116,20 @@ Navigate to the **Athena** service. Ensure your data source is set to `AwsDataCa
 
 **Queries to be executed:**
 * **Total Sales by Customer**: Calculate the total amount spent by each customer.
+  <img width="2825" height="718" alt="image" src="https://github.com/user-attachments/assets/a4dcb584-c97c-4291-b09e-63c326c9744f" />
+
 * **Monthly Order Volume and Revenue**: Aggregate the number of orders and total revenue per month.
+  <img width="2818" height="1155" alt="image" src="https://github.com/user-attachments/assets/f10e84e3-2641-4cba-acfc-67b9b7c33998" />
+
 * **Order Status Dashboard**: Summarize orders based on their status (`shipped` vs. `confirmed`).
+  <img width="2831" height="1102" alt="image" src="https://github.com/user-attachments/assets/b7a3d22c-b340-4dd1-9e61-ebb252965d44" />
+
 * **Average Order Value (AOV) per Customer**: Find the average amount spent per order for each customer.
+  <img width="2828" height="1111" alt="image" src="https://github.com/user-attachments/assets/faadb538-3195-42e4-b507-939de0ac1eb1" />
+
 * **Top 10 Largest Orders in February 2025**: Retrieve the highest-value orders from a specific month.
+  <img width="2816" height="1107" alt="image" src="https://github.com/user-attachments/assets/038cadfa-33dc-478f-953d-fc9a716deb5e" />
+
 
 ---
 
@@ -121,6 +150,7 @@ This instance will host a simple web page to display the Athena query results.
         * Source: `Anywhere` (`0.0.0.0/0`)
 7.  **Advanced details**: Scroll down and for **IAM instance profile**, select the **EC2 Instance Profile** you created.
 8.  Click **Launch instance**.
+<img width="3125" height="1125" alt="image" src="https://github.com/user-attachments/assets/e6d6c524-92b9-4da2-b853-63a1b23fb832" />
 
 ---
 
