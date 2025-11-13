@@ -214,6 +214,14 @@ Once connected via SSH, run the following commands to install the necessary soft
     http://YOUR_PUBLIC_IP_ADDRESS:5000
     ```
     You should now see your Athena Orders Dashboard!
+    <img width="3694" height="2028" alt="image" src="https://github.com/user-attachments/assets/3b4e9af0-aad8-4387-8374-5cd8a2d7633c" />
+
+    <img width="3692" height="2036" alt="image" src="https://github.com/user-attachments/assets/2c18f71c-57e2-4f53-9ad8-9ce3e5b3c969" />
+
+    <img width="3686" height="1887" alt="image" src="https://github.com/user-attachments/assets/a689f3fa-bcb2-45b7-81f6-232c4da7144a" />
+
+enriched folder containing csv files:
+<img width="3689" height="1595" alt="image" src="https://github.com/user-attachments/assets/4c0d438c-fbad-4e24-8028-7c85c241eb08" />
 
 ---
 
