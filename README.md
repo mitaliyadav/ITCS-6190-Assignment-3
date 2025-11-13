@@ -10,6 +10,14 @@ First, set up an S3 bucket with the following folder structure to manage the dat
     * **`raw/`**: For incoming raw data files.
     * **`processed/`**: For cleaned and filtered data output by the Lambda function.
     * **`enriched/`**: For storing athena query results.
+
+The S3 bucket serves as the central data lake for this pipeline. The structured prefixes (raw/, processed/, enriched/) enforce data governance and define distinct stages of the ETL (Extract, Transform, Load) process. This separation is crucial for security, access control, and ensuring the right services only interact with the data they need.
+
+raw/: The landing zone. Data here is immutable and serves as the source for the transformation layer.
+
+processed/: The curated zone. This folder holds cleaned, structured, and schema-enforced data (e.g., CSV files converted to Parquet or filtered to necessary columns). This data is optimized for querying.
+
+enriched/: The consumable zone. This holds output from analytical jobs (e.g., Athena query results) which can be easily consumed by the web application.
 <img width="3674" height="1575" alt="image" src="https://github.com/user-attachments/assets/f228006c-0885-4e9d-9214-a1e72e808b3e" />
 
 
@@ -28,6 +36,15 @@ Create the following IAM roles to grant AWS services the necessary permissions t
     * `AWSLambdaBasicExecutionRole`
     * `AmazonS3FullAccess`
 5.  Give the role a descriptive name (e.g., `Lambda-S3-Processing-Role`) and create it.
+
+Explanation and Approach
+Approach: This step follows the Principle of Least Privilege, ensuring each AWS service can only access the resources it requires for its specific task. This is implemented via IAM Roles, which are security identities that grant temporary permissions when assumed by an AWS service.
+
+Lambda Role: Needs S3FullAccess to read from the raw/ folder and write to the processed/ folder. BasicExecutionRole is required for CloudWatch logging.
+
+Glue Role: Needs S3FullAccess to read the processed data, and GlueServiceRole/GlueConsoleFullAccess to run crawlers, create metadata tables, and interact with the Glue Data Catalog.
+
+EC2 Role (Instance Profile): Needs AmazonAthenaFullAccess to submit SQL queries and retrieve metadata, and AmazonS3FullAccess to read the query results (which Athena writes to S3).
 <img width="3657" height="1572" alt="image" src="https://github.com/user-attachments/assets/9396e601-103b-4334-9e5a-9a409b1c6d92" />
 
 
@@ -67,6 +84,17 @@ This function will automatically process files uploaded to the `raw/` S3 folder.
 7.  Click **Create function**.
 8.  In the **Code source** editor, replace the default code with LambdaFunction.py code for processing the raw data.
 
+Explanation and Approach
+Approach: Lambda implements the "T" (Transform) phase of the ETL pipeline in a serverless, event-driven manner. We use Python because of its powerful data processing libraries (though none are explicitly installed here, we rely on built-in capabilities and Boto3). The LambdaFunction.py code would typically:
+
+Read the newly uploaded CSV file from the raw/ folder.
+
+Perform data cleaning (e.g., handling nulls, formatting dates).
+
+Filter data based on business logic (e.g., only confirmed orders).
+
+Write the cleaned data to the processed/ folder. By selecting the pre-created IAM role, we ensure the function has the necessary, predefined permissions without manual configuration.
+
 <img width="3687" height="1577" alt="image" src="https://github.com/user-attachments/assets/5e219308-bd34-4d73-8120-65b656c19f40" />
 
 <img width="3695" height="1550" alt="image" src="https://github.com/user-attachments/assets/63069b30-24b7-4cc3-b494-4909e8759a93" />
@@ -84,6 +112,9 @@ Set up the S3 trigger to invoke your Lambda function automatically.
 5.  **Prefix (Required)**: Enter `raw/`. This ensures the function only triggers for files in this folder.
 6.  **Suffix (Recommended)**: Enter `.csv`.
 7.  Check the acknowledgment box and click **Add**.
+
+Explanation and Approach
+Approach: This step establishes the event-driven architecture of the pipeline. By configuring the S3 trigger with the raw/ prefix, we ensure the Lambda function is invoked immediately and only when a new object is created specifically in the raw landing zone. This coupling creates the automated "E" (Extract) phase, where the upload event triggers the transformation process. The Orders.csv file serves as the initial data ingestion point, proving the pipeline's automation is functional.
 
 <img width="3693" height="1556" alt="image" src="https://github.com/user-attachments/assets/d242c31a-586a-436f-b91c-67025fa10896" />
 
@@ -105,6 +136,9 @@ The crawler will scan your processed data and create a data catalog, making it q
 5.  **IAM Role**: Select the **Glue Service Role** you created earlier.
 6.  **Output**: Click **Add database** and create a new database named `orders_db`.
 7.  Finish the setup and run the crawler. It will create a new table in your `orders_db` database.
+
+Explanation and Approach
+Approach: AWS Glue, through the Crawler, provides the metadata layer for the data lake. The crawler scans the files in the processed/ S3 folder, infers the schema (column names and data types), and registers this schema as a table within the Glue Data Catalog (orders_db). This is crucial because Athena (which is essentially a query engine for S3) does not read files directly; it queries the metadata definitions stored in the Glue Data Catalog.
 
 <img width="3677" height="1586" alt="image" src="https://github.com/user-attachments/assets/53e6245b-802e-44ca-bc62-cfd75a0ffa59" />
 
@@ -130,6 +164,14 @@ Navigate to the **Athena** service. Ensure your data source is set to `AwsDataCa
 * **Top 10 Largest Orders in February 2025**: Retrieve the highest-value orders from a specific month.
   <img width="2816" height="1107" alt="image" src="https://github.com/user-attachments/assets/038cadfa-33dc-478f-953d-fc9a716deb5e" />
 
+Explanation and Approach
+Approach: Athena acts as the Serverless Analytics Engine. Since the Glue Crawler has created a table definition over the processed/ data, Athena can execute standard SQL queries against the underlying S3 files. This step demonstrates the ability to gain business intelligence from the processed data. The specific queries cover common analytical patterns:
+
+Aggregation and Grouping (Total Sales, Monthly Revenue).
+
+Filtering and Ordering (Top 10 Largest Orders).
+
+KPI Calculation (AOV per Customer).
 
 ---
 
@@ -150,6 +192,11 @@ This instance will host a simple web page to display the Athena query results.
         * Source: `Anywhere` (`0.0.0.0/0`)
 7.  **Advanced details**: Scroll down and for **IAM instance profile**, select the **EC2 Instance Profile** you created.
 8.  Click **Launch instance**.
+
+Explanation and Approach
+
+Approach: The EC2 instance serves as the Presentation Layer (the dashboard host). The choice of t2.micro balances cost efficiency with necessary compute power. Crucially, the Security Group acts as a firewall, explicitly allowing incoming traffic for SSH (port 22) for remote access and Custom TCP (port 5000) for the Flask web application to be publicly accessible. Attaching the EC2 Instance Profile grants the necessary runtime permissions (to use Athena/S3) directly to the applications running on the server.
+
 <img width="3125" height="1125" alt="image" src="https://github.com/user-attachments/assets/e6d6c524-92b9-4da2-b853-63a1b23fb832" />
 
 ---
@@ -162,6 +209,9 @@ This instance will host a simple web page to display the Athena query results.
     ```bash
     ssh -i /path/to/your-key-file.pem ec2-user@YOUR_PUBLIC_IP_ADDRESS
     ```
+    
+Explanation and Approach
+Approach: This uses the standard and secure SSH (Secure Shell) protocol for remote command-line access. The -i flag specifies the path to the private key (.pem file), which authenticates your identity against the public key stored on the EC2 instance. The user name for Amazon Linux AMIs is typically ec2-user.
 
 ---
 
@@ -222,6 +272,10 @@ Once connected via SSH, run the following commands to install the necessary soft
 
 enriched folder containing csv files:
 <img width="3689" height="1595" alt="image" src="https://github.com/user-attachments/assets/4c0d438c-fbad-4e24-8028-7c85c241eb08" />
+
+Explanation and Approach
+
+Approach: The app.py script uses the Boto3 library to programmatically initiate and manage Athena queries. The application code submits the pre-defined SQL queries (from Step 6) to Athena, waits for the results, downloads the resulting CSV/data files from the specified S3_OUTPUT_LOCATION, processes the data, and renders it using Flask for display on the webpage. Updating the region, database, and S3 output path ensures the Boto3 client targets the correct resources within your specific AWS account setup.
 
 ---
 
